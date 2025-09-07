@@ -24,7 +24,7 @@ So here it is, a more simplified version of my original build script, without ha
 
 4. You can place any custom .config files in side the "config" directory to use.
 
-5. Added an option that prompt the usre during the build process to use the "make menuconfig" to add what ever packages or changes you need.
+5. Added an option that prompt the user during the build process to use the "make menuconfig" to add what ever packages or changes you need.
      * When prompted either enter (yes/no): The default is 'no' or let it time out after 10 seconds and it will continue use the existing .config in the config folder.
 	 * If 'yes' enter into the make menuconfig and make the changes you need and save, it will continue the build process with your new .config changes.
 	 * A new .config.new file will be saved in the config directory.. To make it the default config to use for your next build, just rename it from .config.new to .config
