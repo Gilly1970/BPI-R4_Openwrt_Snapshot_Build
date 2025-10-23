@@ -1,14 +1,14 @@
-From 792a3f18b5ae1ce163f9cf342fb5b4ecc003e3ee Mon Sep 17 00:00:00 2001
+From 63278c948c19e1edd19ddfd8d324350e91752867 Mon Sep 17 00:00:00 2001
 From: Gilly1970 <gilroyscott@hotmail.com>
-Date: Thu, 2 Oct 2025 19:58:19 +1000
-Subject: [PATCH] 9998-kernel-6.12-EEPROM-contains-0s-fix-bin-fix
+Date: Fri, 24 Oct 2025 00:51:57 +1000
+Subject: [PATCH] 9999_tx_power_default_eeprom_test
 
 ---
- mt7996/eeprom.c | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 64 insertions(+)
+ mt7996/eeprom.c | 51 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 51 insertions(+)
 
 diff --git a/mt7996/eeprom.c b/mt7996/eeprom.c
-index da3231c..1fff0e1 100644
+index da3231c..6c627cb 100644
 --- a/mt7996/eeprom.c
 +++ b/mt7996/eeprom.c
 @@ -93,6 +93,46 @@ mt7996_eeprom_parse_stream(const u8 *eeprom, u8 band_idx, u8 *path,
@@ -67,29 +67,16 @@ index da3231c..1fff0e1 100644
  	if (!use_default && mt7996_eeprom_variant_valid(dev, fw->data))
  		goto out;
  
-@@ -212,6 +254,28 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
+@@ -212,6 +254,15 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
  				goto out;
  			}
  		}
 +
-+		/* check for faulty EEPROM and load board-specific override */
++		/* check for faulty EEPROM */
 +		u8 *eeprom = dev->mt76.eeprom.data;
 +		if (!eeprom[MT_EE_TX0_POWER_2G] || !eeprom[MT_EE_TX0_POWER_5G] || !eeprom[MT_EE_TX0_POWER_6G] ) {
-+			const struct firmware *fw_eeprom;
-+
-+			ret = request_firmware(&fw_eeprom, "mediatek/mt7996/bpi-r4-eeprom.bin", dev->mt76.dev);
-+			if (!ret) {
-+				/* Success! Copy the good EEPROM data and proceed */
-+				memcpy(eeprom, fw_eeprom->data,
-+				       min_t(size_t, MT7996_EEPROM_SIZE, fw_eeprom->size));
-+				release_firmware(fw_eeprom);
-+				dev_warn(dev->mt76.dev, "Successfully loaded board-specific EEPROM\n");
-+				/* EEPROM is now fixed, skip default fallback */
-+				goto out;
-+			}
-+
-+			/* Board-specific file not found, fall back to the generic default bin */
-+			dev_warn(dev->mt76.dev, "Board-specific EEPROM not found, using generic default\n");
++			/* Faulty EEPROM (zeros) detected, force use of default eeprom.bin */
++			dev_warn(dev->mt76.dev, "Faulty EEPROM (zeros) detected, forcing use of default eeprom.bin\n");
 +			use_default = true;
 +			goto out;
 +		}
