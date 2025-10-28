@@ -1,0 +1,31 @@
+From ffa49653cc437e84a31cb6125213438672648188 Mon Sep 17 00:00:00 2001
+From: Gilly1970 <gilroyscott@hotmail.com>
+Date: Sat, 25 Oct 2025 15:05:15 +1000
+Subject: [PATCH] 9999-mt7996-eeprom-default
+
+---
+ mt7996/mt7996.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/mt7996/mt7996.h b/mt7996/mt7996.h
+index d52264b..95143f8 100644
+--- a/mt7996/mt7996.h
++++ b/mt7996/mt7996.h
+@@ -65,10 +65,10 @@
+ #define MT7990_FIRMWARE_DSP		""
+ #define MT7990_ROM_PATCH		"mediatek/mt7996/mt7990_rom_patch.bin"
+ 
+-#define MT7996_EEPROM_DEFAULT		"mediatek/mt7996/mt7996_eeprom.bin"
+-#define MT7996_EEPROM_DEFAULT_INT	"mediatek/mt7996/mt7996_eeprom_2i5i6i.bin"
+-#define MT7996_EEPROM_DEFAULT_233	"mediatek/mt7996/mt7996_eeprom_233.bin"
+-#define MT7996_EEPROM_DEFAULT_233_INT	"mediatek/mt7996/mt7996_eeprom_233_2i5i6i.bin"
++#define MT7996_EEPROM_DEFAULT		"mediatek/mt7996/bpi-r4-eeprom.bin"
++#define MT7996_EEPROM_DEFAULT_INT	"mediatek/mt7996/bpi-r4-eeprom.bin"
++#define MT7996_EEPROM_DEFAULT_233	"mediatek/mt7996/bpi-r4-eeprom.bin"
++#define MT7996_EEPROM_DEFAULT_233_INT	"mediatek/mt7996/bpi-r4-eeprom.bin"
+ 
+ #define MT7992_EEPROM_DEFAULT		"mediatek/mt7996/mt7992_eeprom.bin"
+ #define MT7992_EEPROM_DEFAULT_INT	"mediatek/mt7996/mt7992_eeprom_2i5i.bin"
+-- 
+2.43.0
+
