@@ -1,5 +1,3 @@
 package/firmware/wireless-regdb/patches/505-wmm-rule-regd-6GHz.patch
-package/firmware/bpi-r4-eeprom-data/files/bpi-r4-eeprom.bin
-epprom.bin_Makefile:package/firmware/bpi-r4-eeprom-data/Makefile
-package/kernel/mt76/patches/9999_tx_power_default_eeprom_test_2.patch
-package/kernel/mt76/patches/9999-mt7996-eeprom-default.patch
+package/kernel/mt76/patches/9999-new-tx-power-eeprom-0s.patch
+

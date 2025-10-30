@@ -1,11 +1,5 @@
 # **BPI-R4 - OpenWrt SnapShot Build Script**
 
-This is my test script for compling the latest OpenWRT SnapShot builds which I thought someone else might find usefull so though I'd share it here...
-
-Major update to the original build script, which bings it inline with my other scripts. New script incorperates the "rsync" function to improve the handling of scripts and patches. I've also include a new option to clone the main repos from a local repo.  
-
-# **Updated SnapShot Build Script**
-
 1. You can change branches "openwrt-24.10" , "master" , "main" etc...
 
 2. If you want to build with the latest openwrt kernel leave this empty OPENWRT_COMMIT="" empty.
@@ -58,23 +52,4 @@ Please note - No directory with sub folders on github can be empty, so the use o
 
 ## **Notes**
 
-Experimental patch for the BE14 cards with the 0'd eeproms - I've extracted the eeprom.bin from my good BE14 card which this new test patch uses instead of the default fallback .bin that comes with the default dirvers. From my initial testing I'm now able to correctly set the tx power value on all three raido's.
-
-Script is updated to compile with the new patch, if you don't need it then just remove the relevant entries from the openwrt-add-patch file.
-
-If you want to test this new patch without using this script.. 
-
-1. bpi-r4-eeprom.bin
-	 * mkdir -p openwrt/package/firmware/bpi-r4-eeprom-data/files
-	 * cp openwrt/package/firmware/bpi-r4-eeprom-data/files/bpi-r4-eeprom.bin
-
-2. epprom.bin_Makefile
-	 * rename "epprom.bin_Makefile to Makefile
-	 * cp openwrt/package/firmware/bpi-r4-eeprom-data/Makefile
-
-3. 9997-kernel-6.12-EEPROM-contains-0s-fix-bin.patch
-	 * cp openwrt/package/kernel/mt76/patches/9997-kernel-6.12-EEPROM-contains-0s-fix-bin.patch
-
-4. CONFIG_PACKAGE_bpi-r4-eeprom-data=y
-	 * Add "CONFIG_PACKAGE_bpi-r4-eeprom-data=y" into your openwrt/.config file before compiling.
-
+New 9999-new-tx-power-eeprom-0s.patch
