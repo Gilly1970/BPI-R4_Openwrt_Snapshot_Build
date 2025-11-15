@@ -37,8 +37,8 @@ readonly OPENWRT_REPO="https://git.openwrt.org/openwrt/openwrt.git"
 # --- Use this line for local testing (uncomment and set your path) ---
 #readonly OPENWRT_REPO="/home/gilly/repos/master/openwrt"
 
-OPENWRT_BRANCH="openwrt-24.10"
-readonly OPENWRT_COMMIT="78b23a26c4c98938d549e7ff5876508544e33d4d"
+OPENWRT_BRANCH="master"
+readonly OPENWRT_COMMIT=""
 
 # --- Directory and File Configuration ---
 readonly SOURCE_DEFAULT_CONFIG_DIR="config"
