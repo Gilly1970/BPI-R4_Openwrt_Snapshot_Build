@@ -1,17 +1,16 @@
-From fc269b10cc6acfcf72f8236c4832f66acb691aed Mon Sep 17 00:00:00 2001
-From: Gilly1970 <gilroyscott@hotmail.com>
-Date: Fri, 24 Oct 2025 12:31:14 +1000
-Subject: [PATCH] 9999_tx_power_default_eeprom_test_2
+From d2107b4ca6d986ca7787c4d3308310c3fd44a617 Mon Sep 17 00:00:00 2001
+Date: Tue, 13 Jan 2026 18:27:32 +1000
+Subject: [PATCH] 0135-mtk-mt76-mt7996-fix-25.12-EEPROM-0s
 
 ---
- mt7996/eeprom.c | 49 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 49 insertions(+)
+ mt7996/eeprom.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
 diff --git a/mt7996/eeprom.c b/mt7996/eeprom.c
-index da3231c..2304bca 100644
+index e5fbfe7..fe4f8b8 100644
 --- a/mt7996/eeprom.c
 +++ b/mt7996/eeprom.c
-@@ -93,6 +93,44 @@ mt7996_eeprom_parse_stream(const u8 *eeprom, u8 band_idx, u8 *path,
+@@ -171,6 +171,44 @@ mt7996_eeprom_parse_stream(const u8 *eeprom, u8 band_idx, u8 *path,
  	}
  }
  
@@ -56,7 +55,7 @@ index da3231c..2304bca 100644
  static bool mt7996_eeprom_variant_valid(struct mt7996_dev *dev, const u8 *def)
  {
  #define FEM_INT	0
-@@ -148,6 +186,8 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
+@@ -226,6 +264,8 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
  		goto out;
  	}
  
@@ -65,22 +64,6 @@ index da3231c..2304bca 100644
  	if (!use_default && mt7996_eeprom_variant_valid(dev, fw->data))
  		goto out;
  
-@@ -212,6 +252,15 @@ static int mt7996_eeprom_load(struct mt7996_dev *dev)
- 				goto out;
- 			}
- 		}
-+
-+		/* check for faulty EEPROM */
-+		u8 *eeprom = dev->mt76.eeprom.data;
-+		if (!eeprom[MT_EE_TX0_POWER_2G] || !eeprom[MT_EE_TX0_POWER_5G] || !eeprom[MT_EE_TX0_POWER_6G] ) {
-+			/* Faulty EEPROM (zeros) detected, force use of default eeprom.bin */
-+			dev_warn(dev->mt76.dev, "Faulty EEPROM (zeros) detected, forcing use of default eeprom.bin\n");
-+			use_default = true;
-+			goto out;
-+		}
- 	}
- 
- out:
 -- 
 2.43.0
 
