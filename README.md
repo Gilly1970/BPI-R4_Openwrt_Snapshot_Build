@@ -9,8 +9,6 @@
 	 * Inside the directory there is two files "openwrt-add-patch" and "openwrt-remove"
 	 * To add or remove a file or patch just enter the full target path into the file - target/linux/generic/backport-6.6/999-some.patch
 	 * The cp -f function works likes this.. "Some-Makefile:package/base-files/Makefile"
-	 * The mkdir -p function works like this.. Add the tree with the new dir  "Some-script.sh:files/etc/uci-defaults/new.sh" or "files/etc/uci-defaults/new.sh" in the correct add file.
-	 * The script will search each of the files at the start of the build and process all entries applying them to the targets.. (or removing them)
 
 4. You can place any custom .config files in side the "config" directory to use.
 
@@ -19,7 +17,7 @@
 	 * If 'yes' enter into the make menuconfig and make the changes you need and save, it will continue the build process with your new .config changes.
 	 * A new .config.new file will be saved in the config directory.. To make it the default config to use for your next build, just rename it from .config.new to .config
 
-6. Error Checks - All scripts and patches will be auto chacked with dos2unix and corrected if needed. 
+6. Error Checks - All scripts and patches will be auto checked with dos2unix and corrected if needed. 
 
 7. Permissions - All scripts, patches and folders used will have the correct permissins applied during the build process.
 
