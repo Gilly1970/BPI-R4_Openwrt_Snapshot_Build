@@ -52,6 +52,5 @@ Please note - No directory with sub folders on github can be empty, so the use o
 
 ## **Notes**
 
-Updated 9999-new-tx-power-eeprom-0s.patch
-
-Please note the "9999-original-EEPROM-0s.patch" is just the two old patches combined into one and not recommended as a fix.
+20.01.2026 - Add-patch Ryan Chen fix-WiFi-6E-discovery-for-6GHz-320MHz-operation to `hostapd.uc` will remove once merged.
+ - small update to script: changed the timing of the add-patches/files function.

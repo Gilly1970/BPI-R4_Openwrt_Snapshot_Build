@@ -33,9 +33,9 @@ fi
 
 # OpenWrt Source Details
 # --- Use this line for remote cloning ---
-readonly OPENWRT_REPO="https://git.openwrt.org/openwrt/openwrt.git"
+#readonly OPENWRT_REPO="https://git.openwrt.org/openwrt/openwrt.git"
 # --- Use this line for local testing (uncomment and set your path) ---
-#readonly OPENWRT_REPO="/home/gilly/repos/master/openwrt"
+readonly OPENWRT_REPO="/home/gilly/openwrt/repos/openwrt"
 
 OPENWRT_BRANCH="master"
 readonly OPENWRT_COMMIT=""
@@ -316,14 +316,6 @@ main() {
         ./scripts/feeds install -a
     )
 
-    prepare_source_directory "$SOURCE_OPENWRT_PATCH_DIR" "OpenWrt Patches"
-    prepare_source_directory "$SOURCE_CUSTOM_FILES_DIR" "Custom Files"
-
-    remove_files_from_list "$OPENWRT_REMOVE_LIST" "$OPENWRT_DIR" "OpenWrt"
-    apply_files_from_list "$OPENWRT_ADD_LIST" "$SOURCE_OPENWRT_PATCH_DIR" "$OPENWRT_DIR" "OpenWrt"
-    
-    copy_custom_files
-
     (
         cd "$OPENWRT_DIR"
         log "Applying custom build configuration..."
@@ -335,6 +327,14 @@ main() {
         log "Validating and expanding final .config..."
         make defconfig
     )
+	
+	prepare_source_directory "$SOURCE_OPENWRT_PATCH_DIR" "OpenWrt Patches"
+    prepare_source_directory "$SOURCE_CUSTOM_FILES_DIR" "Custom Files"
+
+    remove_files_from_list "$OPENWRT_REMOVE_LIST" "$OPENWRT_DIR" "OpenWrt"
+    apply_files_from_list "$OPENWRT_ADD_LIST" "$SOURCE_OPENWRT_PATCH_DIR" "$OPENWRT_DIR" "OpenWrt"
+    
+    copy_custom_files
 
     log "--- Starting the main build... ---"
     (
