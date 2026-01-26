@@ -31,22 +31,29 @@ Please note - No directory with sub folders on github can be empty, so the use o
 ## **How to Use**
 
 1. **Prerequisites**: Ensure you have a compatible build environment, such as **Ubuntu 24.04 LTS**. You will also need to install `dos2unix`:  
-   `sudo apt update`
-   
-   `sudo apt install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget dos2unix`
+     ```csharp
+	 bash
+     sudo apt update
+     sudo apt install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget dos2unix`
+     ```
 
 2. **Clone repo**:
-
-   `git clone https://github.com/Gilly1970/BPI-R4_Openwrt_Snapshot_Build.git`
-   
-   `sudo chmod 775 -R BPI-R4_Openwrt_Snapshot_Build`
+     ```csharp
+     git clone https://github.com/Gilly1970/BPI-R4_Openwrt_Snapshot_Build.git
+     ```
+     ```csharp
+     sudo chmod 775 -R BPI-R4_Openwrt_Snapshot_Build
+     ```
 
 3. **Run the Script**:  
    * Make the script executable:  
-     `chmod +x Openwrt_Snapshot.sh`
-     
+     ```csharp
+     chmod +x Openwrt_Snapshot.sh`
+     ```
    * Execute the script:  
-     `./Openwrt_Snapshot.sh`
+     ```csharp
+     ./Openwrt_Snapshot.sh
+	 ```
 
 ## **Notes**
 
