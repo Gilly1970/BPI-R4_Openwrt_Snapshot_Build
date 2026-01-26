@@ -1,0 +1,69 @@
+From f4f2da5469d6c9822d5395adccf5a33627a8de31 Mon Sep 17 00:00:00 2001
+From: Gilly1970 <gilroyscott@hotmail.com>
+Date: Mon, 26 Jan 2026 15:02:03 +1000
+Subject: [PATCH] 0138-mtk-mt76-eeprom-linked-fix
+
+---
+ mt7996/eeprom.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/mt7996/eeprom.c b/mt7996/eeprom.c
+index e5fbfe7..989452d 100644
+--- a/mt7996/eeprom.c
++++ b/mt7996/eeprom.c
+@@ -171,6 +171,43 @@ mt7996_eeprom_parse_stream(const u8 *eeprom, u8 band_idx, u8 *path,
+ 	}
+ }
+ 
++static void
++mt7996_eeprom_fixup_tx_power(struct mt7996_dev *dev, const u8 *def)
++{
++	u8 *eeprom = dev->mt76.eeprom.data;
++	int i;
++	bool broken_eeprom = false;
++
++	/* +	 * 2.4GHz: Check for missing (0x00) or uninitialized (0xFF) data.
++	 */
++	if (eeprom[MT_EE_TX0_POWER_2G] == 0 || eeprom[MT_EE_TX0_POWER_2G] == 0xff) {
++		eeprom[MT_EE_TX0_POWER_2G] = def[MT_EE_TX0_POWER_2G];
++		broken_eeprom = true;
++	}
++
++	/* +	 * 5GHz: Check for missing (0x00) or uninitialized (0xFF) data.
++	 */
++	for (i = MT_EE_TX0_POWER_5G; i < MT_EE_TX0_POWER_5G + 5; ++i) {
++		if (eeprom[i] == 0 || eeprom[i] == 0xff) {
++			eeprom[i] = def[i];
++			broken_eeprom = true;
++		}
++	}
++
++	/* +	 * 6GHz: Only override if the EEPROM is confirmed to be corrupted 
++	 * (based on the lower bands being bad).
++	 * If 2G/5G are valid, we assume this is a "Type A" board that 
++	 * is handled correctly by the standard driver logic.
++	 */
++	if (broken_eeprom) {
++		for (i = MT_EE_TX0_POWER_6G; i < MT_EE_TX0_POWER_6G + 8; ++i) {
++			if (eeprom[i] != def[i])
++				eeprom[i] = def[i];
++		}
++		dev_warn(dev->mt76.dev, "Corrupted EEPROM detected (Type B). Restoring all bands to safe defaults.\n");
++	}
++}
++
+ static bool mt7996_eeprom_variant_valid(struct mt7996_dev *dev, const u8 *def)
+ {
+ #define FEM_INT	0
+@@ -226,6 +263,8 @@ mt7996_eeprom_check_or_use_default(struct mt7996_dev *dev, bool use_default)
+ 		goto out;
+ 	}
+ 
++	mt7996_eeprom_fixup_tx_power(dev, fw->data);
++
+ 	if (!use_default && mt7996_eeprom_variant_valid(dev, fw->data))
+ 		goto out;
+ 
+-- 
+2.43.0
+

@@ -1,0 +1,238 @@
+From f5fbd00ee39f5bff403886b94cf43eda2e1ae278 Mon Sep 17 00:00:00 2001
+From: Gilly1970 <gilroyscott@hotmail.com>
+Date: Mon, 26 Jan 2026 00:30:14 +1000
+Subject: [PATCH] snap-9999-mt76-fix-backoff-fields
+
+---
+ drivers/net/wireless/mediatek/mt76/eeprom.c | 146 +++++++++++++++-----
+ drivers/net/wireless/mediatek/mt76/mt76.h   |   1 -
+ 2 files changed, 113 insertions(+), 34 deletions(-)
+
+diff --git a/drivers/net/wireless/mediatek/mt76/eeprom.c b/drivers/net/wireless/mediatek/mt76/eeprom.c
+index 3768df6..7e72f61 100644
+--- a/drivers/net/wireless/mediatek/mt76/eeprom.c
++++ b/drivers/net/wireless/mediatek/mt76/eeprom.c
+@@ -9,6 +9,13 @@
+ #include <linux/nvmem-consumer.h>
+ #include <linux/etherdevice.h>
+ #include "mt76.h"
++#include "mt76_connac.h"
++
++enum mt76_sku_type {
++	MT76_SKU_RATE,
++	MT76_SKU_BACKOFF,
++	MT76_SKU_BACKOFF_BF_OFFSET,
++};
+ 
+ static int mt76_get_of_eeprom_data(struct mt76_dev *dev, void *eep, int len)
+ {
+@@ -279,7 +286,6 @@ mt76_find_channel_node(struct device_node *np, struct ieee80211_channel *chan)
+ }
+ EXPORT_SYMBOL_GPL(mt76_find_channel_node);
+ 
+-
+ static s8
+ mt76_get_txs_delta(struct device_node *np, u8 nss)
+ {
+@@ -293,9 +299,24 @@ mt76_get_txs_delta(struct device_node *np, u8 nss)
+ 	return be32_to_cpu(val[nss - 1]);
+ }
+ 
++static inline u8 mt76_backoff_n_chains(struct mt76_dev *dev, u8 idx)
++{
++	/* 0:1T1S, 1:2T1S, ..., 14:5T5S */
++	static const u8 connac3_table[] =
++		{1, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 5, 4, 5, 5};
++	static const u8 connac2_table[] =
++		{1, 2, 3, 4, 2, 3, 4, 3, 4, 4, 0, 0, 0, 0, 0};
++
++	if (idx < 0 || idx >= ARRAY_SIZE(connac3_table))
++		return 0;
++
++	return is_mt799x(dev) ? connac3_table[idx] : connac2_table[idx];
++}
++
+ static void
+-mt76_apply_array_limit(s8 *pwr, size_t pwr_len, const __be32 *data,
+-		       s8 target_power, s8 nss_delta, s8 *max_power)
++mt76_apply_array_limit(struct mt76_dev *dev, s8 *pwr, size_t pwr_len,
++		       const s8 *data, s8 target_power, s8 nss_delta,
++		       s8 *max_power, int n_chains, enum mt76_sku_type type)
+ {
+ 	int i;
+ 
+@@ -303,19 +324,51 @@ mt76_apply_array_limit(s8 *pwr, size_t pwr_len, const __be32 *data,
+ 		return;
+ 
+ 	for (i = 0; i < pwr_len; i++) {
+-		pwr[i] = min_t(s8, target_power,
+-			       be32_to_cpu(data[i]) + nss_delta);
++		s8 backoff_delta, delta = mt76_tx_power_path_delta(n_chains);
++		int backoff_n_chains = 0;
++
++		switch (type) {
++		case MT76_SKU_RATE:
++			pwr[i] = min_t(s8, target_power, data[i] + nss_delta);
++			break;
++		case MT76_SKU_BACKOFF:
++			backoff_n_chains = mt76_backoff_n_chains(dev, i);
++			backoff_delta = mt76_tx_power_path_delta(backoff_n_chains);
++			pwr[i] = min_t(s8, target_power + delta - backoff_delta,
++				       data[i] + nss_delta);
++			break;
++		case MT76_SKU_BACKOFF_BF_OFFSET:
++			backoff_n_chains = mt76_backoff_n_chains(dev, i + 1);
++			backoff_delta = mt76_tx_power_path_delta(backoff_n_chains);
++			pwr[i] = min_t(s8, target_power + delta - backoff_delta,
++				       data[i] + nss_delta);
++			break;
++		default:
++			return;
++		}
++
++		/* used for padding, doesn't need to be considered */
++		if (data[i] >= S8_MAX - 1)
++			continue;
++
++		/* only consider backoff value for the configured chain number */
++		if (type != MT76_SKU_RATE && n_chains != backoff_n_chains)
++			continue;
++
+ 		*max_power = max(*max_power, pwr[i]);
+ 	}
+ }
+ 
+ static void
+-mt76_apply_multi_array_limit(s8 *pwr, size_t pwr_len, s8 pwr_num,
+-			     const __be32 *data, size_t len, s8 target_power,
+-			     s8 nss_delta, s8 *max_power)
++mt76_apply_multi_array_limit(struct mt76_dev *dev, s8 *pwr, size_t pwr_len,
++			     s8 pwr_num, const s8 *data, size_t len,
++			     s8 target_power, s8 nss_delta, s8 *max_power,
++			     int n_chains, enum mt76_sku_type type)
+ {
+ 	int i, cur;
+ 
++#define connac2_backoff_ru_idx	2
++
+ 	if (!data)
+ 		return;
+ 
+@@ -325,8 +378,13 @@ mt76_apply_multi_array_limit(s8 *pwr, size_t pwr_len, s8 pwr_num,
+ 		if (len < pwr_len + 1)
+ 			break;
+ 
+-		mt76_apply_array_limit(pwr + pwr_len * i, pwr_len, data + 1,
+-				       target_power, nss_delta, max_power);
++		if (!is_mt799x(dev) && type == MT76_SKU_BACKOFF &&
++		    i > connac2_backoff_ru_idx)
++			type = MT76_SKU_BACKOFF_BF_OFFSET;
++
++		mt76_apply_array_limit(dev, pwr + pwr_len * i, pwr_len, data + 1,
++				       target_power, nss_delta, max_power,
++				       n_chains, type);
+ 		if (--cur > 0)
+ 			continue;
+ 
+@@ -348,16 +406,11 @@ s8 mt76_get_rate_power_limits(struct mt76_phy *phy,
+ 	struct device_node *np;
+ 	const __be32 *val;
+ 	char name[16];
+-	u32 mcs_rates = dev->drv->mcs_rates;
+-	u32 ru_rates = ARRAY_SIZE(dest->ru[0]);
+ 	char band;
+ 	size_t len;
+-	s8 max_power = 0;
++	s8 max_power = -127;
+ 	s8 txs_delta;
+ 
+-	if (!mcs_rates)
+-		mcs_rates = 10;
+-
+ 	memset(dest, target_power, sizeof(*dest));
+ 
+ 	if (!IS_ENABLED(CONFIG_OF))
+@@ -392,24 +445,51 @@ s8 mt76_get_rate_power_limits(struct mt76_phy *phy,
+ 
+ 	txs_delta = mt76_get_txs_delta(np, hweight16(phy->chainmask));
+ 
++#define __apply_array_limit(arr, type)						\
++	mt76_apply_array_limit(dev, (arr), ARRAY_SIZE(arr), val, target_power,	\
++			       txs_delta, &max_power, n_chains, type)
++
++#define __apply_multi_array_limit(arr, type)					\
++	mt76_apply_multi_array_limit(dev, (arr)[0], ARRAY_SIZE((arr)[0]),	\
++				     ARRAY_SIZE(arr), val, len, target_power,	\
++				     txs_delta, &max_power, n_chains, type)
++
+ 	val = mt76_get_of_array(np, "rates-cck", &len, ARRAY_SIZE(dest->cck));
+-	mt76_apply_array_limit(dest->cck, ARRAY_SIZE(dest->cck), val,
+-			       target_power, txs_delta, &max_power);
+-
+-	val = mt76_get_of_array(np, "rates-ofdm",
+-				&len, ARRAY_SIZE(dest->ofdm));
+-	mt76_apply_array_limit(dest->ofdm, ARRAY_SIZE(dest->ofdm), val,
+-			       target_power, txs_delta, &max_power);
+-
+-	val = mt76_get_of_array(np, "rates-mcs", &len, mcs_rates + 1);
+-	mt76_apply_multi_array_limit(dest->mcs[0], ARRAY_SIZE(dest->mcs[0]),
+-				     ARRAY_SIZE(dest->mcs), val, len,
+-				     target_power, txs_delta, &max_power);
+-
+-	val = mt76_get_of_array(np, "rates-ru", &len, ru_rates + 1);
+-	mt76_apply_multi_array_limit(dest->ru[0], ARRAY_SIZE(dest->ru[0]),
+-				     ARRAY_SIZE(dest->ru), val, len,
+-				     target_power, txs_delta, &max_power);
++	__apply_array_limit(dest->cck, MT76_SKU_RATE);
++
++	val = mt76_get_of_array_s8(np, "rates-ofdm", &len, ARRAY_SIZE(dest->ofdm));
++	__apply_array_limit(dest->ofdm, MT76_SKU_RATE);
++
++	val = mt76_get_of_array_s8(np, "rates-mcs", &len,
++				   ARRAY_SIZE(dest->mcs[0]) + 1);
++	__apply_multi_array_limit(dest->mcs, MT76_SKU_RATE);
++
++	val = mt76_get_of_array_s8(np, "rates-ru", &len,
++				   ARRAY_SIZE(dest->ru[0]) + 1);
++	__apply_multi_array_limit(dest->ru, MT76_SKU_RATE);
++
++	val = mt76_get_of_array_s8(np, "paths-cck", &len,
++				   ARRAY_SIZE(dest->path.cck));
++	__apply_array_limit(dest->path.cck, MT76_SKU_BACKOFF);
++
++	val = mt76_get_of_array_s8(np, "paths-ofdm", &len,
++				   ARRAY_SIZE(dest->path.ofdm));
++	__apply_array_limit(dest->path.ofdm, MT76_SKU_BACKOFF);
++
++	val = mt76_get_of_array_s8(np, "paths-ofdm-bf", &len,
++				   ARRAY_SIZE(dest->path.ofdm_bf));
++	__apply_array_limit(dest->path.ofdm_bf, MT76_SKU_BACKOFF_BF_OFFSET);
++
++	val = mt76_get_of_array_s8(np, "paths-ru", &len,
++				   ARRAY_SIZE(dest->path.ru[0]) + 1);
++	__apply_multi_array_limit(dest->path.ru, MT76_SKU_BACKOFF);
++
++	val = mt76_get_of_array_s8(np, "paths-ru-bf", &len,
++				   ARRAY_SIZE(dest->path.ru_bf[0]) + 1);
++	__apply_multi_array_limit(dest->path.ru_bf, MT76_SKU_BACKOFF);
++
++#undef __apply_array_limit
++#undef __apply_multi_array_limit
+ 
+ 	return max_power;
+ }
+diff --git a/drivers/net/wireless/mediatek/mt76/mt76.h b/drivers/net/wireless/mediatek/mt76/mt76.h
+index bedfe5f..81c20f7 100644
+--- a/drivers/net/wireless/mediatek/mt76/mt76.h
++++ b/drivers/net/wireless/mediatek/mt76/mt76.h
+@@ -529,7 +529,6 @@ struct mt76_driver_ops {
+ 	u32 survey_flags;
+ 	u16 txwi_size;
+ 	u16 token_size;
+-	u8 mcs_rates;
+ 
+ 	unsigned int link_data_size;
+ 
+-- 
+2.43.0
+
