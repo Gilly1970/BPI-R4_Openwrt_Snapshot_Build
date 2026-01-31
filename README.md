@@ -59,6 +59,8 @@ Please note - No directory with sub folders on github can be empty, so the use o
 
 ## **Notes**
 
+- 31.01.2026 - Fixed typo in openwrt-add-patch and removed ```package/kernel/mac80211/patches/build/9999-mt76-fix-backoff-fields.patch```.
+
 - 26.01.2026 - Added updated eeprom containing zeros patch ```9999-mt76-eeprom-linked-fix.patch```. 
   - 2GHz and 5GHz: Check for missing (0x00) or uninitialized (0xFF) data. 
   - If 2G/5G are valid, we assume this is a "Type A" card that is handled correctly by the standard driver logic. 
