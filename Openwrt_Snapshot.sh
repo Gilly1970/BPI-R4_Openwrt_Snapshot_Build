@@ -311,6 +311,11 @@ main() {
 
     (
         cd "$OPENWRT_DIR"
+		
+		log "Applying protocol point to git: intead of https:..." # <==== remove to point back to https
+        sed -i 's|https://git.openwrt.org|git://git.openwrt.org|g' feeds.conf.default # <==== remove to point back to https
+        sed -i '/video/s|git://|https://|g' feeds.conf.default # <==== remove to point back to https
+		
         log "Updating and installing feeds to prepare the source tree..."
         ./scripts/feeds update -a
         ./scripts/feeds install -a
