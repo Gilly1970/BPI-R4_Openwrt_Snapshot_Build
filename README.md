@@ -59,27 +59,8 @@ Please note - No directory with sub folders on github can be empty, so the use o
 
 ## **Notes**
 
-- 31.01.2026 - Fixed typo in openwrt-add-patch and removed ```package/kernel/mac80211/patches/build/9999-mt76-fix-backoff-fields.patch```.
-
-- 26.01.2026 - Added updated eeprom containing zeros patch ```9999-mt76-eeprom-linked-fix.patch```. 
-  - 2GHz and 5GHz: Check for missing (0x00) or uninitialized (0xFF) data. 
-  - If 2G/5G are valid, we assume this is a "Type A" card that is handled correctly by the standard driver logic. 
-  - If 2G/5G are invalid, we assume this is a "Type B" card with the corrupt eeprom which is the target of this patch.
-  
-  ```csharp
-  bash
-  dmesg | grep mt7
-  ```  
-  
-  - and look for the below message in the log...
-  
-  ```csharp
-  [   11.316363] mt7996e 0000:01:00.0: Corrupted EEPROM detected (Type B). Restoring all bands to safe defaults.
-  ```
-  - If you don't see this message in the log then you have card type A and the patch hasn't applied.
-
-- 26.01.2026 - Added test patch from https://patchwork.kernel.org/project/linux-wireless/patch/e92213f793f9cb9f509c26205e7ecb2be6ce77aa.1769156922.git.ryder.lee@mediatek.com/
-
-  - Patch notes: The maximum power value may exist in data or backoff field. To respond the correct value of txpower, mt76 should also consider these values in sku table.
-  
-  - To remove this patch from the build delete this line ```package/kernel/mac80211/patches/build/9999-mt76-fix-backoff-fields.patch``` from the openwrt-add-patch file.
+- 05.03.2026 - Added immortalwrt eeprom patch ```9999-wifi-mt76-mt7996-Use-tx_power-from-default-fw-if-EEP.patch```. 
+	- This patch is reported to work on the snapshot builds but as I no longer have or use the BE14 I haven't tested.
+	  This is the final patch for the BE14 card that I will be adding to this repo. After a long battle with driver 
+	  issues and zeroed EEPROMs, I’m calling it. The hardware is fundamentally flawed—burdened by excessive noise and 
+	  poor signal quality which is why I have stopped using this card altogether and moved on.
