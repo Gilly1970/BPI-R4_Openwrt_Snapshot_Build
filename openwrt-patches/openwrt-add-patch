@@ -1,3 +1,4 @@
-package/firmware/wireless-regdb/patches/509-wmm-rule-regd-6GHz.patch
-package/kernel/mt76/patches/9999-mt76-eeprom-linked-fix.patch
+package/firmware/wireless-regdb/patches/555-US-fix.patch
+target/linux/mediatek/patches-6.12/911-dts-mt7988a-bpi-r4-be14-wifi-eeprom.patch
+target/linux/mediatek/image/filogic.mk
 

@@ -59,6 +59,8 @@ Please note - No directory with sub folders on github can be empty, so the use o
 
 ## **Notes**
 
+- 17.03.2026 - Add new epprom fix for testing [Device tree overlay for the BananaPi BPI-R4 with BE14 WiFi module #22447](https://github.com/openwrt/openwrt/pull/22447)
+
 - 05.03.2026 - Added immortalwrt eeprom patch ```9999-wifi-mt76-mt7996-Use-tx_power-from-default-fw-if-EEP.patch```. 
 	- This patch is reported to work on the snapshot builds but as I no longer have or use the BE14 I haven't tested.
 	  This is the final patch for the BE14 card that I will be adding to this repo. After a long battle with driver 
